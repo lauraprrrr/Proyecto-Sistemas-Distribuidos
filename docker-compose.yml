@@ -1,0 +1,75 @@
+services:
+  almacenamiento:
+    image: mongo:6.0
+    container_name: almacenamiento
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 30s
+      retries: 5
+    networks:
+      - waze_net
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.5'
+
+  scraper:
+    build: ./scraper  
+    container_name: waze_scraper
+    environment:
+      MONGO_HOST: almacenamiento
+      MONGO_USER: root
+      MONGO_PASS: example
+      GRID_STEPS: 3  
+      MAX_WORKERS: 10
+      REQUEST_TIMEOUT: 25
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 1G 
+    depends_on:
+      almacenamiento:
+        condition: service_healthy
+    networks:
+      - waze_net
+    restart: unless-stopped
+  
+  cache:
+    build: ./cache
+    environment:
+      MONGO_HOST: almacenamiento
+      MONGO_USER: root
+      MONGO_PASS: example
+      CACHE_SIZE: 1000
+      POLITICA_CACHE: LRU  #o LFU
+    ports:
+      - "5000:5000"
+    networks:
+      - waze_net
+
+  generator:
+    build: ./generator
+    environment:
+      MONGO_HOST: almacenamiento
+      MONGO_USER: root
+      MONGO_PASS: example
+      DISTRIBUTION: poisson  # O exponential 
+      LAMBDA: 4.0
+      INTERVAL: 0.5
+      CACHE_URL: http://cache:5000
+    networks:
+      - waze_net
+volumes:
+  mongo_data:
+
+networks:
+  waze_net:
+    driver: bridge
