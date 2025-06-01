@@ -14,59 +14,68 @@ services:
       retries: 5
     networks:
       - waze_net
-    deploy:
-      resources:
-        limits:
-          memory: 2G
-          cpus: '1.5'
 
   scraper:
-    build: ./scraper  
+    build: ./scraper
     container_name: waze_scraper
     environment:
       MONGO_HOST: almacenamiento
       MONGO_USER: root
       MONGO_PASS: example
-      GRID_STEPS: 3  
+      GRID_STEPS: 3
       MAX_WORKERS: 10
       REQUEST_TIMEOUT: 25
-    deploy:
-      resources:
-        limits:
-          cpus: '4.0'
-          memory: 1G 
     depends_on:
       almacenamiento:
         condition: service_healthy
     networks:
       - waze_net
     restart: unless-stopped
-  
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    networks:
+      - waze_net
+
   cache:
     build: ./cache
+    container_name: cache_service
     environment:
       MONGO_HOST: almacenamiento
       MONGO_USER: root
       MONGO_PASS: example
-      CACHE_SIZE: 1000
-      POLITICA_CACHE: LRU  #o LFU
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      CACHE_TTL: 300
+      POLITICA_CACHE: ${CACHE_POLICY}
     ports:
       - "5000:5000"
+    depends_on:
+      - redis
+      - almacenamiento
     networks:
       - waze_net
 
   generator:
     build: ./generator
+    container_name: traffic_generator
     environment:
       MONGO_HOST: almacenamiento
       MONGO_USER: root
       MONGO_PASS: example
-      DISTRIBUTION: poisson  # O exponential 
+      DISTRIBUTION: ${DISTRIBUTION}
       LAMBDA: 4.0
       INTERVAL: 0.5
       CACHE_URL: http://cache:5000
+    depends_on:
+      - cache
+      - almacenamiento
     networks:
       - waze_net
+
+
 volumes:
   mongo_data:
 
