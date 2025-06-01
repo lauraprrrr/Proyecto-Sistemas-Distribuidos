@@ -32,13 +32,6 @@ services:
       - waze_net
     restart: unless-stopped
 
-  redis:
-    image: redis:7
-    ports:
-      - "6379:6379"
-    networks:
-      - waze_net
-
   cache:
     build: ./cache
     container_name: cache_service
@@ -72,6 +65,17 @@ services:
     depends_on:
       - cache
       - almacenamiento
+    networks:
+      - waze_net
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    command: >
+      redis-server
+      --maxmemory 5mb
+      --maxmemory-policy ${CACHE_POLICY}
     networks:
       - waze_net
 

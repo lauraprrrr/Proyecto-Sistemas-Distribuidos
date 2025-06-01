@@ -5,11 +5,14 @@ import requests
 import numpy as np
 from pymongo import MongoClient
 from scipy.stats import poisson, expon
+from collections import Counter
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 
 class TrafficGenerator:
     def __init__(self):
+        self.counter = Counter()
+
         self.mongo_client = MongoClient(
             host=os.getenv("MONGO_HOST", "almacenamiento"),
             port=int(os.getenv("MONGO_PORT", 27017)),
@@ -43,6 +46,7 @@ class TrafficGenerator:
         return np.random.choice(self.ids, p=self.id_probabilidades)
 
     def consultar_api(self, id):
+        self.counter[id] += 1  # contar cada ID
         try:
             res = requests.get(f"{self.cache_url}/evento/{id}", timeout=5)
             if res.status_code == 200:
@@ -52,6 +56,10 @@ class TrafficGenerator:
                 logging.warning(f"ID {id} no encontrado")
         except Exception as e:
             logging.error(f"Error: {e}")
+
+        # Mostrar los 5 más usados cada 100 consultas
+        if sum(self.counter.values()) % 100 == 0:
+            logging.info(f"TOP 5 IDs más usados: {self.counter.most_common(5)}")
 
     def poisson_process(self):
         while True:
