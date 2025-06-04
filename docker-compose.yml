@@ -1,0 +1,131 @@
+version: "2"
+
+services:
+  almacenamiento:
+    image: mongo:6.0
+    container_name: almacenamiento
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 30s
+      retries: 5
+    networks:
+      - waze_net
+
+  scraper:
+    build: ./scraper
+    container_name: waze_scraper
+    environment:
+      MONGO_HOST: almacenamiento
+      MONGO_USER: root
+      MONGO_PASS: example
+      GRID_STEPS: 3
+      MAX_WORKERS: 10
+      REQUEST_TIMEOUT: 25
+    depends_on:
+      almacenamiento:
+        condition: service_healthy
+    networks:
+      - waze_net
+    restart: unless-stopped
+
+  cache:
+    build: ./cache
+    container_name: cache_service
+    environment:
+      MONGO_HOST: almacenamiento
+      MONGO_USER: root
+      MONGO_PASS: example
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      CACHE_TTL: 300
+      POLITICA_CACHE: ${CACHE_POLICY}
+    ports:
+      - "5000:5000"
+    depends_on:
+      - redis
+      - almacenamiento
+    networks:
+      - waze_net
+
+  generator:
+    build: ./generator
+    container_name: traffic_generator
+    environment:
+      MONGO_HOST: almacenamiento
+      MONGO_USER: root
+      MONGO_PASS: example
+      DISTRIBUTION: ${DISTRIBUTION}
+      LAMBDA: 4.0
+      INTERVAL: 0.5
+      CACHE_URL: http://cache:5000
+    depends_on:
+      - cache
+      - almacenamiento
+    networks:
+      - waze_net
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    command: >
+      redis-server
+      --maxmemory 5mb
+      --maxmemory-policy ${CACHE_POLICY}
+    networks:
+      - waze_net
+
+  filtrado:
+    build: ./filtrado
+    container_name: filtrado
+    networks:
+      - hadoop
+      - waze_net
+    volumes:
+      - ./filtrado/hadoop:/opt/hadoop/etc/hadoop
+
+  namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    container_name: namenode
+    ports:
+      - "9870:9870"   # Web UI
+      - "9000:9000"   # RPC
+    environment:
+      - CLUSTER_NAME=hadoop-cluster
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+      - HDFS_CONF_dfs_replication=1
+    volumes:
+      - namenode:/hadoop/dfs/name
+    networks:
+      - hadoop
+
+  datanode:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: datanode
+    environment:
+      - CLUSTER_NAME=hadoop-cluster
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+      - HDFS_CONF_dfs_replication=1
+    volumes:
+      - datanode:/hadoop/dfs/data
+    depends_on:
+      - namenode
+    networks:
+      - hadoop
+
+
+volumes:
+  mongo_data:
+  namenode:
+  datanode:
+
+networks:
+  waze_net:
+    driver: bridge
+  hadoop:
