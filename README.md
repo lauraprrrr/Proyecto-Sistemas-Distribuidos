@@ -16,7 +16,7 @@ docker-compose up
 
 # Comandos útiles:
 
-## Para ver graficas de cache
+## Para ver gráficas de cache
 
 ```bash
 python graficar_metricas.py     
@@ -25,22 +25,27 @@ python graficar_metricas.py
 ## Pruebas de cache y generador
 
 # Poisson + LRU
-DISTRIBUTION=poisson CACHE_POLICY=allkeys-lru docker compose up --build
+```bash
+DISTRIBUTION=poisson CACHE_POLICY=allkeys-lru docker compose up --build  
+```
 
 # Poisson + LFU
-DISTRIBUTION=poisson CACHE_POLICY=allkeys-lfu docker compose up --build
-
+```bash
+DISTRIBUTION=poisson CACHE_POLICY=allkeys-lfu docker compose up --build 
+```
 # Exponential + LRU
+```bash
 DISTRIBUTION=exponential CACHE_POLICY=allkeys-lru docker compose up --build
-
+```
 # Exponential + LFU
+```bash
 DISTRIBUTION=exponential CACHE_POLICY=allkeys-lfu docker compose up --build
+```
+
+# Ejecutar scrips Pig
 
 
-# # Ejecutar scrips Pig
-
-
-# Entrar a la consola de procesamiento:
+##  Entrar a la consola de procesamiento:
 
 ```bash
 docker exec -it procesamiento bash
@@ -51,3 +56,8 @@ pig /scripts/tendencias_temporales.pig
 
 ```
 
+
+# Datos grandes
+
+Los datos grandes como la información geoespacial de las comunas no se encuentra en el repositorio
+La configuración de hadoop tampoco
