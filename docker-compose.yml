@@ -1,3 +1,5 @@
+version: "2"
+
 services:
   almacenamiento:
     image: mongo:6.0
@@ -79,10 +81,60 @@ services:
     networks:
       - waze_net
 
+  procesamiento:
+    build: ./procesamiento
+    container_name: procesamiento
+    networks:
+      - hadoop
+      - waze_net
+    volumes:
+      - ./filtrado/hadoop:/opt/hadoop/etc/hadoop
+
+  filtrado:
+    build: ./filtrado
+    container_name: filtrado
+    networks:
+      - hadoop
+      - waze_net
+    volumes:
+      - ./filtrado/hadoop:/opt/hadoop/etc/hadoop
+
+  namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    container_name: namenode
+    ports:
+      - "9870:9870"   # Web UI
+      - "9000:9000"   # RPC
+    environment:
+      - CLUSTER_NAME=hadoop-cluster
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+      - HDFS_CONF_dfs_replication=1
+    volumes:
+      - namenode:/hadoop/dfs/name
+    networks:
+      - hadoop
+
+  datanode:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: datanode
+    environment:
+      - CLUSTER_NAME=hadoop-cluster
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+      - HDFS_CONF_dfs_replication=1
+    volumes:
+      - datanode:/hadoop/dfs/data
+    depends_on:
+      - namenode
+    networks:
+      - hadoop
+
 
 volumes:
   mongo_data:
+  namenode:
+  datanode:
 
 networks:
   waze_net:
     driver: bridge
+  hadoop:
