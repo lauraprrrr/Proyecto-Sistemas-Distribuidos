@@ -57,7 +57,6 @@ def get_evento(id):
         logging.info(f"✅ HIT ({hit_count}) - ID: {id}")
         return jsonify({"source": "cache", "evento": json.loads(cached)})
 
-    # Si no está en Redis, consultar MongoDB
     doc = mongo_collection.find_one({"_id": id})
     if not doc:
         return jsonify({"error": "No encontrado"}), 404
