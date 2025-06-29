@@ -44,7 +44,7 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       CACHE_TTL: 300
-      POLITICA_CACHE: ${CACHE_POLICY}
+      POLITICA_CACHE: allkeys-lfu
     ports:
       - "5000:5000"
     depends_on:
@@ -60,7 +60,7 @@ services:
       MONGO_HOST: almacenamiento
       MONGO_USER: root
       MONGO_PASS: example
-      DISTRIBUTION: ${DISTRIBUTION}
+      DISTRIBUTION: poisson
       LAMBDA: 4.0
       INTERVAL: 0.5
       CACHE_URL: http://cache:5000
@@ -77,7 +77,7 @@ services:
     command: >
       redis-server
       --maxmemory 5mb
-      --maxmemory-policy ${CACHE_POLICY}
+      --maxmemory-policy allkeys-lfu
     networks:
       - waze_net
 
@@ -128,11 +128,52 @@ services:
     networks:
       - hadoop
 
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.17
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+    ports:
+      - "9200:9200"
+    networks:
+      - waze_net
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
 
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.17.17
+    container_name: kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    networks:
+      - waze_net
+
+  visualizacion:
+    build: ./visualizacion
+    container_name: visualizacion
+    depends_on:
+      - elasticsearch
+      - namenode
+      - datanode
+    networks:
+      - hadoop
+      - waze_net
+    volumes:
+      - ./filtrado/hadoop:/opt/hadoop/etc/hadoop
+
+
+    
 volumes:
   mongo_data:
   namenode:
   datanode:
+  esdata:
+
 
 networks:
   waze_net:
