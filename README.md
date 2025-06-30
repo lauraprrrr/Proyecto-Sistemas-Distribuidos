@@ -1,11 +1,33 @@
 # Proyecto-Sistemas-Distribuidos
 
-Este proyecto corresponde a la segunda entrega del curso de Sistemas Distribuidos. Su objetivo es procesar de manera distribuida los eventos de tráfico recolectados desde Waze, utilizando herramientas como HDFS y Apache Pig.
+Este proyecto corresponde a la entrega final del curso de Sistemas Distribuidos 2025-1. Su objetivo es procesar de manera distribuida los eventos de tráfico recolectados desde el mapa de Waze (https://www.waze.com/es-419/live-map/). Las alertas de trafico son extraidas, almacenadas, filtradas y finalmente pueden ser visualizadas con Kibana de Elasticsearch. Además contiene un módulo cache que funciona con simulación de tráfico generado artificialmente(modulo generator), esto con el objetivo de emular un sistema de cache real implementado con Redis.
+
+Los módulos implementados son los siguientes:
+
+Scraper: Captura las alertas desde el mapa de Waze (https://www.waze.com/es-419/live-map/) mediante scraper.py
+Almacenamiento: Este módulo se encarga de el almacenamiento de los datos previamente recuperados usando la base de datos no relacional MongoDB garantizando la persistencia de los datos a pesar de detener los servicios de Docker.
+Generator: Módulo encargado de generar tráfico simulado mediante generator.py usando técnicas de distribución de datos similares al comportamiento real de consultas. Emula la popularidad de las consultas mediante la función de distribución Zipf,propiedad estadística que establece que la frecuencia de un evento es inversamente proporcional a su rango en una lista ordenada por frecuencia. En otras palabras, esto genera que algunos datos sean más consultados que otros(más populares) emulando el comportamiento real de los usuarios.
+Cache: En el backend del caché se uso Redis. Este se encargó de almacenar las consultas más frecuentes previamente simuladas con el módulo generator. Se estableció 5MB como tañano de memoria de cache y se usó un TTL de 5 minutos y una política de remoción LFU.
+Esto permitió una taza de aciertos sobre el 70 % y mantuvo en cache entre 200 a 250 registros durante el tiempo de análisis. Este análisis se realizó con un script de python para generar gráficos a partir de las métricas obtenidas durante una hora de ejecución(graficar_metricas.py). El gráfico obtenido fue el siguiente:
+![Gráfico cache](grafico_cache.png)
 
 
-## Cómo ejecutar el proyecto
 
-Construir los contenedores:
+## Pipelines
+
+Para la ejecución del proyecto se implementaron 3 formas de proceder (pipelines).
+
+1. Forma 1 (pipeline 1)
+Enfocado en la estracción de datos de waze para su posterior almacenamiento
+Modulos involucrados: Scraper, Almacenamiento, Generator y Cache
+
+2. Forma 2 (pipeline 2)
+Este pipeline filtra los datos luego de recolectar datos suficientes en el almacenamiento
+
+3. Forma 3 (pipeline 3)
+
+
+Para ejecutar un pipeline se debe usar el comando que sigue en la ubicación de la carpeta del proyecto.
 
 ```bash
 docker-compose build
@@ -13,51 +35,16 @@ docker-compose up
 ```
 
 
+# Otros comandos útiles
 
-# Comandos útiles:
-
-## Para ver gráficas de cache
-
-```bash
-python graficar_metricas.py     
-```
-
-## Pruebas de cache y generador
-
-# Poisson + LRU
-```bash
-DISTRIBUTION=poisson CACHE_POLICY=allkeys-lru docker compose up --build  
-```
-
-# Poisson + LFU
-```bash
-DISTRIBUTION=poisson CACHE_POLICY=allkeys-lfu docker compose up --build 
-```
-# Exponential + LRU
-```bash
-DISTRIBUTION=exponential CACHE_POLICY=allkeys-lru docker compose up --build
-```
-# Exponential + LFU
-```bash
-DISTRIBUTION=exponential CACHE_POLICY=allkeys-lfu docker compose up --build
-```
-
-# Ejecutar scrips Pig
-
-
-##  Entrar a la consola de procesamiento:
+Para ver las métricas de cache gráficadas:
 
 ```bash
-docker exec -it procesamiento bash
-
-pig /scripts/incidentes_por_comuna.pig
-pig /scripts/frecuencia_tipos.pig
-pig /scripts/tendencias_temporales.pig   
-
+python graficar_metricas.py       
 ```
+NOTA: ejecutar mientras el cache está en funcionamiento (pipeline 1 o 1_1)
 
 
-# Datos grandes
+# Comentarios
 
-Los datos grandes como la información geoespacial de las comunas no se encuentra en el repositorio
-La configuración de hadoop tampoco
+Los archivos de gran tamaño y la configuración de hadoop no están presentes en el repositorio
