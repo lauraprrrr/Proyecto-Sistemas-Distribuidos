@@ -29,7 +29,7 @@ Este módulo se encargó del filtrado de los datos provenientes de la base de da
 Luego ordenó los datos en un archivo formato .csv y lo subió a Hadoop Distributed File System(HDFS).
 
 ## Procesamiento
-Mediante el uso de Apache Pig se obtuvo el archivo .csv derivado del módulo filtrado y se usó para procesar algunas consultas en Pig Latin (entrega 2)
+Mediante el uso de Apache Pig se obtuvo el archivo .csv derivado del módulo filtrado y se usó para procesar algunas consultas en PigLatin (entrega 2)
 
 ## Visualización (entrega 3)
 Este módulo implementó un script llamado visualización.py, el cual se encargó de extraer el archivo .csv de HDFS para indexarlo en ElasticSearch. Gracias a la herramienta de visualización de datos Kibana se pudo consultar los datos y generar gráficos.
