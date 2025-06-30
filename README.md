@@ -16,7 +16,7 @@ Esto permitió una taza de aciertos sobre el 70 % y mantuvo en cache entre 200 a
 
 ![Gráfico cache](grafico_cache.png)
 
-
+*En relación al resultado gráficos, cabe mencionar que la tasa de aciertos(linea azul) se ve como una línea recta debido a que este dato fluctúa entre 0 y 1, por lo que a gran escala se ve como si fuera una línea recta.
 
 # Pipelines
 
