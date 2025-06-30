@@ -6,7 +6,7 @@ import os
 
 HDFS_FILE_PATH = "/user/proyecto/input/datos_filtrados2.csv"
 LOCAL_TMP_PATH = "/tmp/datos_filtrados2.csv"
-INDEX_NAME = "alertas_waze"
+INDEX_NAME = "alertas_waze_v2"
 
 
 es = Elasticsearch("http://elasticsearch:9200")
@@ -30,7 +30,7 @@ try:
     subprocess.run(["hdfs", "dfs", "-get", HDFS_FILE_PATH, LOCAL_TMP_PATH], check=True)
     print(f"Archivo descargado localmente en {LOCAL_TMP_PATH}")
 except subprocess.CalledProcessError as e:
-    print("❌ Error al descargar archivo desde HDFS:", e)
+    print("❌ Error al extraer archivo de hdfs", e)
     exit(1)
 
 

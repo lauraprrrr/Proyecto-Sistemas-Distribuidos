@@ -3,6 +3,7 @@ import numpy as np
 from pymongo import MongoClient
 from datetime import datetime
 import os
+import fiona
 import subprocess
 from sklearn.cluster import DBSCAN
 from math import radians
@@ -37,18 +38,23 @@ df["timestamp"] = df["timestamp_dt"].dt.strftime("%Y-%m-%d %H:%M:%S")
 
 time.sleep(100)
 
-print("📥 Cargando polígonos comunales...")
-gdf_comunas = gpd.read_file("shapefiles/comunas/COMUNAS_v1.shp")
+print("Cargando polígonos comunales...")
+fiona.supported_drivers['ESRI Shapefile'] = 'rw'
+gdf_comunas = gpd.read_file("shapefiles/comunas/COMUNAS_v1.shp", encoding='latin1')
 gdf_comunas = gdf_comunas.to_crs(epsg=4326)
 
-print("📍 Asignando comunas por ubicación geográfica...")
+print(gdf_comunas["COMUNA"].unique())
+
+
+print("Asignando comunas por ubicación geográfica...")
 df["geometry"] = df.apply(lambda row: Point(row["longitud"], row["latitud"]), axis=1)
 gdf_eventos = gpd.GeoDataFrame(df, geometry="geometry", crs="EPSG:4326")
 gdf_resultado = gpd.sjoin(gdf_eventos, gdf_comunas[["COMUNA", "geometry"]], how="left", predicate="within")
 df["comuna"] = gdf_resultado["COMUNA"].fillna("Desconocida")
 
+
 sin_comuna = df["comuna"].eq("Desconocida").sum()
-print(f"⚠️  {sin_comuna} registros quedaron sin comuna asignada.")
+print(f"!!!!!!!!!!!{sin_comuna} registros quedaron sin comuna asignada.")
 
 df["tipo_incidente"] = df["tipo"].str.upper().str.strip()
 df["descripcion"] = df["subtype"].fillna("").str.upper().str.replace("_", " ")
@@ -64,7 +70,7 @@ for (tipo, comuna), grupo in df.groupby(["tipo_incidente", "comuna"]):
     grupo = grupo.copy()
     grupo["lat_rad"] = grupo["latitud"].apply(radians)
     grupo["lon_rad"] = grupo["longitud"].apply(radians)
-    grupo["ts_scaled"] = (grupo["timestamp_epoch"] - grupo["timestamp_epoch"].min()) / (30 * 60)  # 30 minutos
+    grupo["ts_scaled"] = (grupo["timestamp_epoch"] - grupo["timestamp_epoch"].min()) / (30 * 60) 
 
     coords = np.hstack([
         grupo[["lat_rad", "lon_rad"]].to_numpy(),
@@ -79,13 +85,17 @@ for (tipo, comuna), grupo in df.groupby(["tipo_incidente", "comuna"]):
 df_final = pd.concat(filtrados)
 
 
-
-df_final["timestamp"] = pd.to_datetime(df_final["timestamp"]).dt.strftime("%Y-%m-%d %H:%M:%S")
+# FORMATO PARA Q LO ACEPTE KIBANA!!!!!
+df_final["timestamp"] = pd.to_datetime(df_final["timestamp"], utc=True).dt.strftime("%Y-%m-%dT%H:%M:%SZ")
 final = df_final[["tipo_incidente", "comuna", "timestamp", "descripcion", "latitud", "longitud"]]
-final = final.replace({np.nan: ""}).sort_values(by="timestamp")
+final = final.fillna("").sort_values(by="timestamp")
 
-local_path = "/tmp/datos_filtrados2.csv"
-hdfs_path = "/user/proyecto/input/datos_filtrados2.csv"
+# Eliminar NaNs numéricos
+final = final.dropna(subset=["latitud", "longitud"])
+final = final.fillna("")  # rellena strings vacíos donde falten textos
+
+local_path = "/tmp/datos_filtrados5.csv"
+hdfs_path = "/user/proyecto/input/datos_filtrados5.csv"
 
 final.to_csv(local_path, index=False)
 print(f"\n✅ {len(final)} registros exportados a {local_path}")
