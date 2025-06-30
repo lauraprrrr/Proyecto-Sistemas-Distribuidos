@@ -1,12 +1,16 @@
+import subprocess
 
-###
+services = [
+    "almacenamiento",
+    "filtrado",
+    "procesamiento",
+    "namenode",
+    "datanode"
+]
 
-#para ejecutar los scrips pig:
+def run_pipeline():
+    cmd = ["docker-compose", "up", "--build"] + services
+    subprocess.run(cmd)
 
-#entrar a la consola de procesamiento:
- #docker exec -it procesamiento bash
-
-#pig /scripts/incidentes_por_comuna.pig
-#pig /scripts/frecuencia_tipos.pig
-#pig /scripts/tendencias_temporales.pig
-###
+if __name__ == "__main__":
+    run_pipeline()
