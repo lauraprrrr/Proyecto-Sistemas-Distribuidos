@@ -4,13 +4,13 @@ Este proyecto corresponde a la entrega final del curso de Sistemas Distribuidos 
 
 Los módulos implementados son los siguientes:
 
-## Scraper: 
+## Scraper 
 Captura las alertas desde el mapa de Waze (https://www.waze.com/es-419/live-map/) mediante scraper.py
-## Almacenamiento: 
+## Almacenamiento
 Este módulo se encarga de el almacenamiento de los datos previamente recuperados usando la base de datos no relacional MongoDB garantizando la persistencia de los datos a pesar de detener los servicios de Docker.
-## Generator: 
+## Generator
 Módulo encargado de generar tráfico simulado mediante generator.py usando técnicas de distribución de datos similares al comportamiento real de consultas. Emula la popularidad de las consultas mediante la función de distribución Zipf,propiedad estadística que establece que la frecuencia de un evento es inversamente proporcional a su rango en una lista ordenada por frecuencia. En otras palabras, esto genera que algunos datos sean más consultados que otros(más populares) emulando el comportamiento real de los usuarios.
-## Cache:
+## Cache
 En el backend del caché se uso Redis. Este se encargó de almacenar las consultas más frecuentes previamente simuladas con el módulo generator. Se estableció 5MB como tañano de memoria de cache y se usó un TTL de 5 minutos y una política de remoción LFU.
 Esto permitió una taza de aciertos sobre el 70 % y mantuvo en cache entre 200 a 250 registros durante el tiempo de análisis. Este análisis se realizó con un script de python para generar gráficos a partir de las métricas obtenidas durante una hora de ejecución(graficar_metricas.py). El gráfico obtenido fue el siguiente:
 
@@ -22,14 +22,15 @@ Esto permitió una taza de aciertos sobre el 70 % y mantuvo en cache entre 200 a
 
 Para la ejecución del proyecto se implementaron 3 formas de proceder (pipelines).
 
-1. Forma 1 (pipeline 1)
+1. Forma 1 (pipeline 1):
 Enfocado en la estracción de datos de waze para su posterior almacenamiento
 Modulos involucrados: Scraper, Almacenamiento, Generator y Cache
 
-2. Forma 2 (pipeline 2)
+2. Forma 2 (pipeline 2):
+
 Este pipeline filtra los datos luego de recolectar datos suficientes en el almacenamiento
 
-3. Forma 3 (pipeline 3)
+3. Forma 3 (pipeline 3):
 
 
 Para ejecutar un pipeline se debe usar el comando que sigue en la ubicación de la carpeta del proyecto.
