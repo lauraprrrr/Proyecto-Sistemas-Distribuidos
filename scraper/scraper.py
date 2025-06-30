@@ -43,7 +43,7 @@ HEADERS = {
 }
 
 def generar_grid():
-    """Genera una cuadrícula de coordenadas con validaciones"""
+    # Genera una cuadrícula de coordenadas
     
     if (REGION_METROPOLITANA["top"] <= REGION_METROPOLITANA["bottom"] or
         REGION_METROPOLITANA["right"] <= REGION_METROPOLITANA["left"]):
@@ -69,7 +69,7 @@ def generar_grid():
     return grids
 
 def generar_id_unico(alerta):
-    """Genera un ID único con hash SHA-256"""
+    # Genera un ID único con hash SHA-256
     try:
         hash_input = f"{alerta['type']}-{alerta['location']['x']}-{alerta['location']['y']}-{alerta['pubMillis']}"
         return hashlib.sha256(hash_input.encode()).hexdigest()
@@ -78,7 +78,7 @@ def generar_id_unico(alerta):
         raise
 
 def obtener_alertas_grid(grid):
-    """Obtiene alertas con manejo de errores mejorado"""
+    # Obtiene alertas con manejo de errores
     url = (
         "https://www.waze.com/live-map/api/georss"
         f"?top={min(grid['top'], grid['bottom'])}"
@@ -119,7 +119,7 @@ def obtener_alertas_grid(grid):
     return []
 
 def procesar_alerta(alerta, collection):
-    """Procesa y guarda una alerta con manejo de errores"""
+    # Procesa y guarda una alerta
     try:
         doc = {
             "_id": generar_id_unico(alerta),
@@ -153,7 +153,7 @@ def procesar_alerta(alerta, collection):
         return False
 
 def inicializar_mongodb(collection):
-    """Configura índices y prepara la colección"""
+    # Configura índices y prepara la colección
     try:
         collection.create_indexes([
             IndexModel([("ubicacion", "2dsphere")], name="geoindex"),
