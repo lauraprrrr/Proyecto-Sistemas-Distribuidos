@@ -1,17 +1,13 @@
 import subprocess
 
 services = [
-    "hadoop",      
-    "namenode",
-    "datanode",
     "elasticsearch",
-    "kibana"
+    "kibana",
+    "namenode",
+    "datanode"
 ]
 
 def run_pipeline():
-
-    if "hadoop" in services:
-        services.remove("hadoop")
     cmd = ["docker-compose", "up", "--build"] + services
     subprocess.run(cmd)
 
