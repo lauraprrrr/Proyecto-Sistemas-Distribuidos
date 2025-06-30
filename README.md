@@ -1,4 +1,4 @@
-# ── ⋆⋅♡⋅⋆ ── Proyecto semestral Sistemas Distribuidos ── ⋆⋅♡⋅⋆ ──
+# .𖥔 ݁ ˖๋ ࣭ ⭑ Proyecto semestral Sistemas Distribuidos . ݁₊ ⊹ . ݁ ⟡ ݁ . ⊹ ₊ ݁.
 
 Este proyecto corresponde a la entrega final del curso de Sistemas Distribuidos 2025-1. Su objetivo es procesar de manera distribuida los eventos de tráfico recolectados desde el mapa de Waze (https://www.waze.com/es-419/live-map/). Las alertas de trafico son extraidas, almacenadas, filtradas y finalmente pueden ser visualizadas con Kibana de Elasticsearch. Además contiene un módulo cache que funciona con simulación de tráfico generado artificialmente(modulo generator), esto con el objetivo de emular un sistema de cache real implementado con Redis.
 
